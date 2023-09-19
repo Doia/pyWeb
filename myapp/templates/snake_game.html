@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        /* Estilo para el contenedor principal */
+        .board-container {
+            display: grid;
+            grid-template-columns: repeat(7, 240px);
+            justify-content: center;
+        }
+
+        /* Estilo básico para el tablero y las celdas */
+        .board {
+            display: grid;
+            justify-content: center;
+            grid-template-columns: repeat(10, 20px);
+            grid-gap: 1px;
+            margin: 10px auto;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            background-color: lightgray;
+        }
+        .snake_head {
+            background-image: url('{% static "images/cabeza.png" %}');
+            background-size: cover;
+        }
+
+        /* Rotación a la derecha (0 grados) */
+        .snake_head.up {
+            transform: rotate(0deg);
+        }
+        
+        /* Rotación a la derecha (90 grados) */
+        .snake_head.right {
+            transform: rotate(90deg);
+        }
+
+        /* Rotación hacia abajo (180 grados) */
+        .snake_head.down {
+            transform: rotate(180deg);
+        }
+
+        /* Rotación a la izquierda (-90 grados o 270 grados) */
+        .snake_head.left {
+            transform: rotate(-90deg);
+        }
+
+        .snake_body {
+            background-image: url('{% static "images/cuerpo.png" %}');
+            background-size: cover;
+        }
+        .food {
+            background-color: red;
+        }
+        .counters {
+            display: flex;
+            justify-content: space-around;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="board-container">
+        {% for _ in "123456789ABCDEFGHILPM" %}
+            <div style="display: block;">
+               <div class="board" id="board{{ forloop.counter }}"></div>
+                <div class="counters">
+                    <p>Score: <span id="score{{ forloop.counter }}">0</span></p>
+                    <p>Turnos: <span id="turns{{ forloop.counter }}">0</span></p>
+                </div> 
+            </div>
+            
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'home' %}"><button style="margin: 20px auto;">Salir Snake</button></a>
+    <script src="{% static 'js/snake_game.js' %}"></script>
+</body>
+</html>
