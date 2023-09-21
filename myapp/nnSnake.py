@@ -96,7 +96,7 @@ class RedNeuronal():
 
     def build_snake_deep_nn(self):
         # Entrada: tablero aplanado + dirección
-        input_data = keras.layers.Input(shape=(10*10 + 4,))
+        input_data = keras.layers.Input(shape=(10*10 + 1,))
         
         x = keras.layers.Dense(512, activation='relu')(input_data)
         x = keras.layers.Dense(256, activation='relu')(x)
@@ -111,47 +111,50 @@ class RedNeuronal():
         # Evalúa la red neuronal en un conjunto de datos y establece el fitness
         self.fitness = self.model.evaluate(data, labels, verbose=0)[1]  # Suponiendo que el segundo valor es el accuracy
 
+    def train_nn(self, state, toPrint):
+        board = state['board']
+        bad_direction = state['bad_direction']
+        good_direction = state['good_direction']
 
+        flattened_board = np.array(board).flatten()
 
+        # bad training
+        bad_direction_vector = [DIRECTION_MAP[bad_direction]]
+        bad_input_data = np.concatenate((flattened_board, bad_direction_vector))
+        bad_input_np = bad_input_data.reshape(1, BOARD_SIZE * BOARD_SIZE + 1)
+        bad_input_np = bad_input_np / 3.0
 
-    # def predict_next_move(self, state):
-    #     board = state['board']
-    #     direction = state['direction']
+        if good_direction != None and good_direction != bad_direction:
+            good_direction_vector = [DIRECTION_MAP[good_direction]]
+            good_input_data = np.concatenate((flattened_board, good_direction_vector))
+            good_input_np = good_input_data.reshape(1, BOARD_SIZE * BOARD_SIZE + 1)
+            good_input_np = good_input_np / 3.0
+        else:
+            # Usar bad_input como placeholder
+            good_input_np = bad_input_np.copy()
 
-    #     # Agrega la dirección actual al final de cada fila del tablero
-    #     direction_number = DIRECTION_MAP[direction]
+        inputs = np.vstack([good_input_np, bad_input_np])
+        labels = np.array([-10 if good_direction != None and good_direction != bad_direction else 10, 10]) 
 
-    #     for row in board:
-    #         row.append(direction_number)
+        if toPrint:
+            print(good_input_np)
 
-    #     # Convierte el tablero en un numpy array y lo reformatea para la entrada de la red neuronal
-    #     board_np = np.array(board).reshape(1, BOARD_SIZE, BOARD_SIZE + 1, 1)
         
-    #     # Normaliza la entrada
-    #     board_np = board_np / 3.0
+        self.model.fit(inputs, labels, verbose=0, epochs=1)
 
-    #     predictions = self.model.predict(board_np, verbose=0)
-    #     predicted_move = np.argmax(predictions[0])
-
-    #     # Mapea el movimiento predicho de vuelta a su cadena de texto correspondiente
-    #     direction_string = list(DIRECTION_MAP.keys())[list(DIRECTION_MAP.values()).index(predicted_move)]
-
-    #     return direction_string
-    
     def predict_next_move(self, state):
         board = state['board']
         direction = state['direction']
         
         # Convierte la dirección a one-hot encoding
-        direction_vector = [0, 0, 0, 0]
-        direction_vector[DIRECTION_MAP[direction]] = 1
+        direction_vector = [DIRECTION_MAP[direction]]
 
         # Aplana el tablero y concatena con el vector de dirección
         flattened_board = np.array(board).flatten()
         input_data = np.concatenate((flattened_board, direction_vector))
         
         # Reformatea y normaliza la entrada para la red neuronal
-        input_np = input_data.reshape(1, BOARD_SIZE * BOARD_SIZE + 4)
+        input_np = input_data.reshape(1, BOARD_SIZE * BOARD_SIZE + 1)
         input_np = input_np / 3.0
         
         # Predicción

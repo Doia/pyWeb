@@ -13,6 +13,7 @@ class SnakeGame {
 
         this.snake = [{ x: 0, y: 2 }];  // La serpiente comienza en el centro
         
+        this.lastDirection = "RIGHT";
         this.direction = "RIGHT";
         this.score = 0;
         this.goodChoise = 0;
@@ -26,16 +27,28 @@ class SnakeGame {
         return !this.gameOver
     }
 
+    cloneSnake() {
+        let snakeClone = []
+
+        this.snake.forEach(body => {
+            snakeClone.push({x: body.x, y: body.y})
+        })
+        return snakeClone;
+    }
+
     advance(){
         if (!this.gameOver){
+
+            // let snakeAnterior = { x: this.snake.x, y: this.snake.y}
+            let snakeAnterior = this.cloneSnake()
             this.snakeAdvance();
-            if (!this.isSnakeDead()){
-                this.drawBoard(); 
-                this.incrementTurns();
-            } 
-            else{
-                this.gameOver = true;
-            }  
+            if (this.isSnakeDead()){
+               this.snake = snakeAnterior;
+               this.gameOver = true;
+            }
+
+            this.drawBoard(); 
+            this.incrementTurns(); 
         }
     }
 
@@ -162,17 +175,18 @@ class SnakeGame {
             board.push(line);
         }
 
-        board[this.snake[0].x][this.snake[0].y] = 1
+        board[this.snake[0].y][this.snake[0].x] = 1
         
         for (let i = 1; i < this.snake.length; i++){
-            board[this.snake[i].x][this.snake[i].y] = 2
+            board[this.snake[i].y][this.snake[i].x] = 2
         }
 
-        board[this.food.x][this.food.y] = 3
+        board[this.food.y][this.food.x] = 3
 
 
         let state = {
             id: this.id,
+            lastDirection: this.lastDirection,
             direction: this.direction,
             board: board
         } 
@@ -328,11 +342,10 @@ async function gameLoop() {
         if (allGamesStates.length === 0){
             allGamesResults = [];
             snakeGames.forEach(snakeGame => {
-                allGamesResults.push({'id': snakeGame.id, 'fitness': Math.pow(snakeGame.score, 2) + snakeGame.goodChoise });
+                allGamesResults.push({'id': snakeGame.id, 'final_state': snakeGame.getGameState(), 'fitness': Math.pow(snakeGame.score, 2) + snakeGame.goodChoise });
                 // allGamesResults.push({'id': snakeGame.id, 'fitness': snakeGame.score});
             })
             const response = await getNextGenFromServer(allGamesResults);
-
             initSnakeGames();
         }
         else{
@@ -340,6 +353,7 @@ async function gameLoop() {
             response.games.forEach( gameResponse => {
                 snakeGames.forEach(snakeGame => {
                     if (gameResponse.id === snakeGame.id){
+                        snakeGame.lastDirection = snakeGame.direction;
                         switch(gameResponse.next_move) {
                             case 'RIGHT':
                                 if(snakeGame.direction !== 'LEFT') snakeGame.direction = 'RIGHT';
